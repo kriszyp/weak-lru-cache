@@ -1,0 +1,19 @@
+{
+  "name": "weak-cache",
+  "author": "Kris Zyp",
+  "version": "0.1.0",
+  "description": "weak cache",
+  "license": "MIT",
+  "types": "./index.d.ts",
+  "keywords": [
+    "cache",
+    "weak",
+    "references"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/kriszyp/weak-cache"
+  },
+  "type": "module",
+  "main": "./index.js"
+}
