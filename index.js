@@ -31,6 +31,7 @@ class WeakLRUCache extends Map  {
 				if (value === undefined)
 					super.delete(key)
 				else {
+					entry.value = value
 					if (mode !== 1)
 						this.expirer.used(entry)
 					return mode === 2 ? value : entry
@@ -166,8 +167,10 @@ class LRFUStrategy {
 		} while (entry && nextLrfu)
 		if (entry) {// this one was removed
 			entry.position = -1
-			if (entry.deref)
-				entry.value === undefined // clear out the self value so the weak reference can be collected (and then removed from the map)
+			if (entry.deref) {
+				Object.defineProperty(entry,'value',{ get(){}, set(){throw new Error('no change')}})
+				//entry.value === undefined // clear out the self value so the weak reference can be collected (and then removed from the map)
+			}
 			else
 				this.onRemove(entry)
 		}
