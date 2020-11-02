@@ -3,6 +3,11 @@ class WeakLRUCache extends Map  {
 		super(entries)
 		this.expirer = (options ? options.expirer === false ? new NoLRUStrategy() : options.expirer : null) || defaultExpirer
 		this.deferRegister = Boolean(options && options.deferRegister)
+		if (options && options.cacheSize) {
+			this.expirer.lruSize = options.cacheSize >> 2
+			this.expirer.generationMask = (this.expirer.lruSize >> 1) - 1
+			this.expirer.clear()
+		}
 		let registry = this.registry = new FinalizationRegistry(key => {
 			let entry = super.get(key)
 			if (entry && entry.deref && entry.deref() === undefined)
@@ -100,6 +105,8 @@ const NOT_IN_LRU = 0x40000000
 */
 class LRFUStrategy {
 	constructor() {
+		this.generationMask = 0xf
+		this.lruSize = 0x2000
 		this.clear()
 	}
 	delete(entry) {
@@ -131,7 +138,7 @@ class LRFUStrategy {
 		let lruPosition
 		let lruIndex
 		if (originalPosition < NOT_IN_LRU) {
-			let lruIndex = (originalPosition >> 22) & 15
+			lruIndex = (originalPosition >> 22) & 15
 			if (lruIndex >= 3)
 				return // can't get any higher than this, don't do anything
 			let lru = this.lru[lruIndex]
@@ -149,14 +156,13 @@ class LRFUStrategy {
 			nextLru.position = lruPosition + 1
 			let previousEntry = nextLru[lruPosition & 0xffff]
 			nextLru[lruPosition & 0xffff] = entry
-			lruPosition |= expirationPriority << 26
-			entry.position = lruPosition
-			if ((lruPosition & 0xfff) === 0xfff) {
+			entry.position = lruPosition | (expirationPriority << 26)
+			if ((lruPosition & this.generationMask) === this.generationMask) {
 				// next generation
 				lruPosition += 0x10001
-				if (lruPosition & 0x400000)
-					lruPosition -= 0x400000 // reset the generations
-				if (lruPosition & 0x2000)
+				if ((lruPosition & 0x3f0000) === 0x3f0000)
+					lruPosition -= 0x3f0000 // reset the generations
+				if ((lruPosition & 0xffff) >= this.lruSize)
 					lruPosition &= 0x7fff0000 // reset the inner position
 				nextLru.position = lruPosition
 			}
@@ -178,7 +184,7 @@ class LRFUStrategy {
 	clear() {
 		this.lru = []
 		for (let i = 0; i < 4; i++) {
-			this.lru[i] = new Array(0x2000)
+			this.lru[i] = new Array(this.lruSize)
 			this.lru[i].position = i << 22
 		}
 	}
