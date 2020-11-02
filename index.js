@@ -2,6 +2,7 @@ class WeakLRUCache extends Map  {
 	constructor(entries, options) {
 		super(entries)
 		this.expirer = (options ? options.expirer === false ? new NoLRUStrategy() : options.expirer : null) || defaultExpirer
+		this.deferRegister = Boolean(options && options.deferRegister)
 		let registry = this.registry = new FinalizationRegistry(key => {
 			let entry = super.get(key)
 			if (entry && entry.deref && entry.deref() === undefined)
@@ -51,13 +52,16 @@ class WeakLRUCache extends Map  {
 		let entry
 		if (value && typeof value == 'object') {
 			entry = new WeakRef(value)
-			entry.key = key
 			entry.value = value
-			entry.cache = this
+			if (this.deferRegister) {
+				entry.key = key
+				entry.cache = this
+			} else
+				this.registry.register(value, key)
 		} else if (value === undefined)
 			return
 		else
-			entry = { key, value, cache: this }
+			entry = { value, key, cache: this }
 		this.set(key, entry, expirationPriority)
 		return entry
 	}
@@ -92,7 +96,7 @@ class WeakLRUCache extends Map  {
 const PINNED_IN_MEMORY = 0x7fffffff
 const NOT_IN_LRU = 0x40000000
 /* bit pattern:
-*  < is-in-lru 1 bit > < mask/or bits 3 bits > <lru index 2 bits > <generation - bits> < position in cache - 16 bits >
+*  < is-in-lru 1 bit > < mask/or bits 4 bits > <lru index 4 bits > <generation - 6 bits> < position in cache - 16 bits >
 */
 class LRFUStrategy {
 	constructor() {
@@ -100,7 +104,7 @@ class LRFUStrategy {
 	}
 	delete(entry) {
 		if (entry.position < NOT_IN_LRU) {
-			this.lrfu[(entry.position >> 24) & 3][entry.position & 0xffff] = null
+			this.lru[(entry.position >> 22) & 15][entry.position & 0xffff] = null
 		}
 		entry.position |= NOT_IN_LRU
 	}
@@ -113,68 +117,78 @@ class LRFUStrategy {
 		} else if (entry.position == PINNED_IN_MEMORY && expirationPriority == undefined) {
 			return
 		} else if (expirationPriority >= 0) {
+			if (expirationPriority > 7)
+				expirationPriority = 7
 		} else {
 			if (originalPosition >= 0)
-				expirationPriority = (originalPosition >> 26) & 7
+				expirationPriority = (originalPosition >> 26) & 15
 			else
 				expirationPriority = 0
 		}
 		orMask = expirationPriority < 1 ? 0 : expirationPriority < 3 ? 1 : expirationPriority < 7 ? 3 : expirationPriority < 15 ? 7 : expirationPriority < 31 ? 15 : expirationPriority < 63 ? 31 : expirationPriority < 127 ? 63 : 127
 		
-		let nextLrfu
-		let lrfuPosition
-		let lrfuIndex
+		let nextLru
+		let lruPosition
+		let lruIndex
 		if (originalPosition < NOT_IN_LRU) {
-			let lrfuIndex = (originalPosition >> 24) & 3
-			if (lrfuIndex >= 3)
+			let lruIndex = (originalPosition >> 22) & 15
+			if (lruIndex >= 3)
 				return // can't get any higher than this, don't do anything
-			let lrfu = this.lrfu[lrfuIndex]
+			let lru = this.lru[lruIndex]
 			// check to see if it is in the same generation
-			if ((originalPosition & 0xff0000) === (lrfu.position & 0xff0000))
+			if ((originalPosition & 0x3f0000) === (lru.position & 0x3f0000))
 				return // still in same generation, don't move
-			lrfu[originalPosition & 0xffff] = null // remove it, we are going to move it
-			nextLrfu = this.lrfu[++lrfuIndex]
+			lru[originalPosition & 0xffff] = null // remove it, we are going to move it
+			nextLru = this.lru[++lruIndex]
 		} else
-			nextLrfu = this.lrfu[lrfuIndex = 0]
+			nextLru = this.lru[lruIndex = 0]
 
 		do {
-			// put it in the next lrfu
-			let lrfuPosition = nextLrfu.position = (nextLrfu.position + 1) | orMask
-			let previousEntry = nextLrfu[lrfuPosition & 0xffff]
-			nextLrfu[lrfuPosition & 0xffff] = entry
-			entry.position = lrfuPosition
-			if ((lrfuPosition & 0xfff) === 0xfff) {
+			// put it in the next lru
+			let lruPosition = nextLru.position | orMask
+			nextLru.position = lruPosition + 1
+			let previousEntry = nextLru[lruPosition & 0xffff]
+			nextLru[lruPosition & 0xffff] = entry
+			lruPosition |= expirationPriority << 26
+			entry.position = lruPosition
+			if ((lruPosition & 0xfff) === 0xfff) {
 				// next generation
-				lrfuPosition += 0x10001
-				if (lrfuPosition & 0x400000)
-					lrfuPosition &= 0x7f000000 // reset the generations
-				if (lrfuPosition & 0x2000)
-					lrfuPosition &= 0x7fff0000 // reset the inner position
-				nextLrfu.position = lrfuPosition
+				lruPosition += 0x10001
+				if (lruPosition & 0x400000)
+					lruPosition -= 0x400000 // reset the generations
+				if (lruPosition & 0x2000)
+					lruPosition &= 0x7fff0000 // reset the inner position
+				nextLru.position = lruPosition
 			}
 			entry = previousEntry
 			if (entry) {
-				nextLrfu = this.lrfu[--lrfuIndex]
-				orMask = 0 // TODO: Preserve from position
+				nextLru = this.lru[--lruIndex]
+				expirationPriority = ((entry.position || 0) >> 26) & 15
+				orMask = expirationPriority < 1 ? 0 : expirationPriority < 3 ? 1 : expirationPriority < 7 ? 3 : expirationPriority < 15 ? 7 : expirationPriority < 31 ? 15 : expirationPriority < 63 ? 31 : expirationPriority < 127 ? 63 : 127
 			}
-		} while (entry && nextLrfu)
+		} while (entry && nextLru)
 		if (entry) {// this one was removed
 			entry.position |= NOT_IN_LRU
-			entry.cache.onRemove(entry)
+			if (entry.cache)
+				entry.cache.onRemove(entry)
+			else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
+				entry.value = undefined
 		}
 	}
 	clear() {
-		this.lrfu = []
+		this.lru = []
 		for (let i = 0; i < 4; i++) {
-			this.lrfu[i] = new Array(0x2000)
-			this.lrfu[i].position = i << 24
+			this.lru[i] = new Array(0x2000)
+			this.lru[i].position = i << 22
 		}
-		this.index = 0
 	}
 }
 class NoLRUStrategy {
 	used(entry) {
-		entry.cache.onRemove(entry)
+		if (entry.cache)
+			entry.cache.onRemove(entry)
+		else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
+			entry.value = undefined
 	}
 }
 
