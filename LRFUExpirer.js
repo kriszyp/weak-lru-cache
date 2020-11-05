@@ -25,8 +25,8 @@ class LRFUExpirer {
 			return
 		} else if (expirationPriority >= 0) {
 			let bits = 0
-			if (expirationPriority > (this.lruSize >> 1))
-				expirationPriority = this.lruSize >> 1
+			if (expirationPriority > (this.lruSize >> 2))
+				expirationPriority = this.lruSize >> 2
 			while (expirationPriority > 0) {
 				expirationPriority = expirationPriority >> 1
 				bits++
