@@ -1,4 +1,4 @@
-const { LRFUExpirer } = require('./LRFUExpirer')
+const { LRFUExpirer, EXPIRED_ENTRY } = require('./LRFUExpirer')
 
 class WeakLRUCache extends Map  {
 	constructor(entries, options) {
@@ -32,7 +32,7 @@ class WeakLRUCache extends Map  {
 		let value
 		if (entry) {
 			value = entry.value
-			if (value === undefined) {
+			if (value === EXPIRED_ENTRY) {
 				value = entry.deref && entry.deref()
 				if (value === undefined)
 					super.delete(key)
@@ -64,10 +64,9 @@ class WeakLRUCache extends Map  {
 				entry.cache = this
 			} else
 				this.registry.register(value, key)
-		} else if (value === undefined)
-			return
-		else
+		} else if (value !== undefined)
 			entry = { value, key, cache: this }
+		// else entry is undefined
 		this.set(key, entry, expirationPriority)
 		return entry
 	}
@@ -105,6 +104,9 @@ class NoLRUExpirer {
 			entry.cache.onRemove(entry)
 		else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
 			entry.value = undefined
+	}
+	delete(entry) {
+		// nothing to do here, we don't have a separate cache here
 	}
 }
 

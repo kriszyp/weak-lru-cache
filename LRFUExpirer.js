@@ -1,5 +1,8 @@
 const PINNED_IN_MEMORY = 0x7fffffff
 const NOT_IN_LRU = 0x40000000
+const EXPIRED_ENTRY = {
+	description: 'This cache entry value has been expired from the LRFU cache, and is waiting for garbage collection to be removed.'
+}
 /* bit pattern:
 *  < is-in-lru 1 bit > ...< mask/or bits 4 bits > <lru index 4 bits > < position in cache - 16 bits >
 */
@@ -85,7 +88,7 @@ class LRFUExpirer {
 			if (entry.cache)
 				entry.cache.onRemove(entry)
 			else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
-				entry.value = undefined
+				entry.value = EXPIRED_ENTRY
 		}
 	}
 	clear() {
@@ -98,7 +101,7 @@ class LRFUExpirer {
 						if (entry.cache)
 							entry.cache.onRemove(entry)
 						else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
-							entry.value = undefined
+							entry.value = EXPIRED_ENTRY
 					}
 				}
 			}
@@ -141,3 +144,4 @@ function startTimedCleanup(reference, cleanupInterval) {
 		interval.unref()
 }
 exports.LRFUExpirer = LRFUExpirer
+exports.EXPIRED_ENTRY = EXPIRED_ENTRY
