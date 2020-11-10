@@ -1,12 +1,12 @@
 # weak-lru-cache
 
-The weak-lru-cache package provides a powerful cache that works in harmony with the JS garbage collection (GC) and least-recently used (LRU) and least-freqently used (LFU) expiration strategy to help cache data with highly optimized cache retention. It uses LRU/LFU (LRFU) expiration to retain referenced data, and then once data has been inactive, it uses weak references (finalization registry) to allow GC to remove the cached data as part of the normal GC cycles, but still continue to provide cached access to the data as long as it still resides in memory and hasn't been collected. This provides the best of modern expiration strategies combined with optimal GC interaction.
+The weak-lru-cache package provides a powerful cache that works in harmony with the JS garbage collection (GC) and least-recently used (LRU) and least-freqently used (LFU) expiration strategy to help cache data with highly optimized cache retention. It uses LRU/LFU (LRFU) expiration to retain referenced data, and then once data has been inactive, it uses weak references (and finalization registry) to allow GC to remove the cached data as part of the normal GC cycles, but still continue to provide cached access to the data as long as it still resides in memory and hasn't been collected. This provides the best of modern expiration strategies combined with optimal GC interaction.
 
 In a typical GC'ed VM, objects may continue to exist in memory long after they are no longer (strongly) referenced, but using a weak-referencing cached, we allow the GC to collect such data, but the cache can return this data up until the point it is garbaged collected, ensuring much more efficient use of memory.
 
-This can also be used to ensure a single object identity per key. By loading storing an object for a given key, we can check the cache whenever we need that object, and before recreating it, thereby giving us the means to ensure we also use the same object for a given as long as it still exists in memory.
+This can also be used to ensure a single object identity per key. By loading storing an object for a given key, we can check the cache whenever we need that object, and before recreating it, thereby giving us the means to ensure we also use the same object for a given key as long as it still exists in memory.
 
-This project requires Node 14.10 or higher.
+This project requires NodeJS v14.10 or higher (or Node v13.0 with --harmony-weak-ref flag).
 
 ## Setup
 
@@ -52,7 +52,7 @@ The `WeakLRUCache` constructor supports an optional `options` object parameter t
 This indicates the number of entries to allocate in the cache. This defaults to 32,768.
 
 ### expirer
-By default there is a single shared expiration cache, that is single instance of LRFUExpirer. However, you can define your own expiration cache or create separate instances of LRFUExpirer. Generally using a (the default) single instance is preferable since it naturally gives higher priority/recency to more heavily used caches.
+By default there is a single shared expiration cache, that is a single instance of `LRFUExpirer`. However, you can define your own expiration cache or create separate instances of LRFUExpirer. Generally using a (the default) single instance is preferable since it naturally gives higher priority/recency to more heavily used caches, and allows lesser used caches to expire more of their entries.
 
 ### deferRegister
 This flag can be set to true to save key and cache information so that it can defer the finalization registration. This tends to be slightly faster for caches that are more heavily dominated by lots of entry replacements (multiple setValue calls to same entries before they expire). However, for (what is generally considered more typical) usage more dominated by setting values and getting them until they expire, the default setting will probably be faster.
