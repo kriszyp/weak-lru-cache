@@ -22,6 +22,10 @@ class LRFUExpirer {
 		let originalPosition = entry.position
 		let orMask
 		if (expirationPriority < 0) {
+			// pin this in memory, first remove from LRFU and then mark it as pinned in memory
+			if (entry.position < NOT_IN_LRU) {
+				this.lru[(entry.position >> 16) & 15][entry.position & 0xffff] = null
+			}
 			entry.position = PINNED_IN_MEMORY
 			return
 		} else if (entry.position == PINNED_IN_MEMORY && expirationPriority == undefined) {
