@@ -3,6 +3,8 @@ const { LRFUExpirer, EXPIRED_ENTRY } = require('./LRFUExpirer')
 class WeakLRUCache extends Map  {
 	constructor(options) {
 		super()
+		this.hits = 0
+		this.misses = 0
 		this.expirer = (options ? options.expirer === false ? new NoLRUExpirer() : options.expirer : null) || defaultExpirer || (defaultExpirer = new LRFUExpirer())
 		this.deferRegister = Boolean(options && options.deferRegister)
 		if (options && options.cacheSize) {
@@ -31,6 +33,7 @@ class WeakLRUCache extends Map  {
 		let entry = super.get(key)
 		let value
 		if (entry) {
+			this.hits++
 			value = entry.value
 			if (value === EXPIRED_ENTRY) {
 				value = entry.deref && entry.deref()
@@ -48,7 +51,8 @@ class WeakLRUCache extends Map  {
 					this.expirer.used(entry)
 				return mode === 2 ? value : entry
 			}
-		}
+		} else
+			this.misses++
 	}
 	getValue(key) {
 		return this.get(key, 2)
