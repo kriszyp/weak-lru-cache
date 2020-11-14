@@ -9,7 +9,7 @@ const EXPIRED_ENTRY = {
 class LRFUExpirer {
 	constructor() {
 		this.lruSize = 0x2000
-		this.clear()
+		this.reset()
 		startTimedCleanup(new WeakRef(this), this.cleanupInterval || 60000)
 	}
 	delete(entry) {
@@ -95,7 +95,7 @@ class LRFUExpirer {
 				entry.value = EXPIRED_ENTRY
 		}
 	}
-	clear() {
+	reset() {
 	/*	if (this.lru) {
 			for (let i = 0; i < 4; i++) {
 				for (let j = 0, l = this.lru.length; j < l; j++) {

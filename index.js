@@ -9,7 +9,7 @@ class WeakLRUCache extends Map  {
 		this.deferRegister = Boolean(options && options.deferRegister)
 		if (options && options.cacheSize) {
 			this.expirer.lruSize = options.cacheSize >> 2
-			this.expirer.clear()
+			this.expirer.reset()
 		}
 		let registry = this.registry = new FinalizationRegistry(key => {
 			let entry = super.get(key)
@@ -97,8 +97,10 @@ class WeakLRUCache extends Map  {
 		this.expirer.used(entry, expirationPriority)
 	}
 	clear() {
-		this.expirer.clear()
-		super.clear()
+		for (let [ key, entry ] of this) {
+			this.expirer.delete(entry)
+			super.delete(key)
+		}
 	}
 }
 
