@@ -54,6 +54,8 @@ This indicates the number of entries to allocate in the cache. This defaults to 
 ### expirer
 By default there is a single shared expiration cache, that is a single instance of `LRFUExpirer`. However, you can define your own expiration cache or create separate instances of LRFUExpirer. Generally using a (the default) single instance is preferable since it naturally gives higher priority/recency to more heavily used caches, and allows lesser used caches to expire more of their entries.
 
+You can also set this to `false` to indicate that no LRU/LRFU cache should be used and the cache should rely entirely on weak-references.
+
 ### deferRegister
 This flag can be set to true to save key and cache information so that it can defer the finalization registration. This tends to be slightly faster for caches that are more heavily dominated by lots of entry replacements (multiple setValue calls to same entries before they expire). However, for (what is generally considered more typical) usage more dominated by setting values and getting them until they expire, the default setting will probably be faster.
 

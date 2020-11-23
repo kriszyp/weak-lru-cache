@@ -7,10 +7,10 @@ const EXPIRED_ENTRY = {
 *  < is-in-lru 1 bit > ...< mask/or bits 4 bits > <lru index 4 bits > < position in cache - 16 bits >
 */
 class LRFUExpirer {
-	constructor() {
-		this.lruSize = 0x2000
+	constructor(options) {
+		this.lruSize = options && options.lruSize || 0x2000
 		this.reset()
-		startTimedCleanup(new WeakRef(this), this.cleanupInterval || 60000)
+		startTimedCleanup(new WeakRef(this), options && options.cleanupInterval || 60000)
 	}
 	delete(entry) {
 		if (entry.position < NOT_IN_LRU) {

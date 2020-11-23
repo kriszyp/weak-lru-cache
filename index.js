@@ -5,12 +5,11 @@ class WeakLRUCache extends Map  {
 		super()
 		this.hits = 0
 		this.misses = 0
-		this.expirer = (options ? options.expirer === false ? new NoLRUExpirer() : options.expirer : null) || defaultExpirer || (defaultExpirer = new LRFUExpirer())
-		this.deferRegister = Boolean(options && options.deferRegister)
 		if (options && options.cacheSize) {
-			this.expirer.lruSize = options.cacheSize >> 2
-			this.expirer.reset()
+			options.lruSize = options.cacheSize >> 2
 		}
+		this.expirer = (options ? options.expirer === false ? defaultNoLRUExpirer : options.expirer : null) || defaultExpirer || (defaultExpirer = new LRFUExpirer(options))
+		this.deferRegister = Boolean(options && options.deferRegister)
 		let registry = this.registry = new FinalizationRegistry(key => {
 			let entry = super.get(key)
 			if (entry && entry.deref && entry.deref() === undefined)
@@ -115,6 +114,7 @@ class NoLRUExpirer {
 		// nothing to do here, we don't have a separate cache here
 	}
 }
+const defaultNoLRUExpirer = new NoLRUExpirer()
 
 let defaultExpirer
 exports.WeakLRUCache = WeakLRUCache
