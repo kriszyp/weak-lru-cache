@@ -107,8 +107,8 @@ class NoLRUExpirer {
 	used(entry) {
 		if (entry.cache)
 			entry.cache.onRemove(entry)
-		else if (entry.deref) // if we have already registered the entry in the finalization registry, just clear it
-			entry.value = undefined
+		else if (entry.deref) // if we have already registered the entry in the finalization registry, just mark it expired from the beginning
+			entry.value = EXPIRED_ENTRY
 	}
 	delete(entry) {
 		// nothing to do here, we don't have a separate cache here
