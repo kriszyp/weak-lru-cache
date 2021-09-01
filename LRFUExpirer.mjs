@@ -1,12 +1,12 @@
 const PINNED_IN_MEMORY = 0x7fffffff
 const NOT_IN_LRU = 0x40000000
-const EXPIRED_ENTRY = {
+export const EXPIRED_ENTRY = {
 	description: 'This cache entry value has been expired from the LRFU cache, and is waiting for garbage collection to be removed.'
 }
 /* bit pattern:
 *  < is-in-lru 1 bit > ...< mask/or bits 4 bits > <lru index 4 bits > < position in cache - 16 bits >
 */
-class LRFUExpirer {
+export class LRFUExpirer {
 	constructor(options) {
 		this.lruSize = options && options.lruSize || 0x2000
 		this.reset()
@@ -147,5 +147,3 @@ function startTimedCleanup(reference, cleanupInterval) {
 	if (interval.unref)
 		interval.unref()
 }
-exports.LRFUExpirer = LRFUExpirer
-exports.EXPIRED_ENTRY = EXPIRED_ENTRY
