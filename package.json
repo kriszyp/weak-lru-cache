@@ -16,10 +16,14 @@
     "type": "git",
     "url": "http://github.com/kriszyp/weak-lru-cache"
   },
-  "main": "./index.js",
-  "module": "index.mjs",
+  "type": "module",
+  "main": "index.cjs",
+  "module": "main.mjs",
   "scripts": {
     "test": "./node_modules/.bin/mocha tests/test*.js -u tdd"
+  },
+  "dependencies": {
+    "esm": "^3.2.25"
   },
   "devDependencies": {
     "benchmark": "^2.1.4",
