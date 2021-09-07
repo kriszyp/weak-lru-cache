@@ -1,9 +1,7 @@
-const { WeakLRUCache } = require('..')
-const chai = require('chai')
+import { WeakLRUCache } from '../index.js'
+import chai from 'chai'
 const assert = chai.assert
 let cache = new WeakLRUCache()
-var inspector = require('inspector')
-//inspector.open(9330, null, true)
 
 suite('WeakLRUCache basic tests', function(){
 	test('add entries', function(){

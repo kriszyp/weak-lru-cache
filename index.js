@@ -1,5 +1,7 @@
-import { LRFUExpirer, EXPIRED_ENTRY } from './LRFUExpirer.mjs'
-export { LRFUExpirer } from './LRFUExpirer.mjs'
+import { LRFUExpirer, EXPIRED_ENTRY } from './LRFUExpirer.js'
+export { LRFUExpirer } from './LRFUExpirer.js'
+
+let defaultExpirer
 export class WeakLRUCache extends Map  {
 	constructor(options) {
 		super()
@@ -115,5 +117,3 @@ class NoLRUExpirer {
 	}
 }
 const defaultNoLRUExpirer = new NoLRUExpirer()
-
-let defaultExpirer
