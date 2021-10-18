@@ -28,7 +28,7 @@ myValue.getValue('key') -> return the object above as long as it is still cached
 
 The `WeakLRUCache` class extends the native `Map` class and also includes the following methods, which are the primary intended interactions with the cache:
 
-### getValue(key, expirationPriority?)
+### getValue(key)
 Gets the value referenced by the given key and returns it. If the value is no longer cached, will return undefined. 
 
 ### setValue(key, value, expirationPriority?)
