@@ -4,7 +4,7 @@ The weak-lru-cache package provides a powerful cache that works in harmony with 
 
 In a typical GC'ed VM, objects may continue to exist in memory long after they are no longer (strongly) referenced, but using a weak-referencing cached, we allow the GC to collect such data, but the cache can return this data up until the point it is garbaged collected, ensuring much more efficient use of memory.
 
-This can also be used to ensure a single object identity per key. By loading storing an object for a given key, we can check the cache whenever we need that object, and before recreating it, thereby giving us the means to ensure we also use the same object for a given key as long as it still exists in memory.
+This can also be used to ensure a single object identity per key. By storing an object in the cache for a given key, we can check the cache whenever we need that object, and before recreating it, thereby giving us the means to ensure we also use the same object for a given key as long as it still exists in memory.
 
 This project requires NodeJS v14.10 or higher (or Node v13.0 with --harmony-weak-ref flag).
 
