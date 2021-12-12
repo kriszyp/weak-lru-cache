@@ -10,22 +10,27 @@ In a typical GC'ed VM, objects may continue to exist in memory long after they a
 
 This can also be used to ensure a single object identity per key. By storing an object in the cache for a given key, we can check the cache whenever we need that object, and before recreating it, thereby giving us the means to ensure we also use the same object for a given key as long as it still exists in memory.
 
-This project requires NodeJS v14.10 or higher (or Node v13.0 with --harmony-weak-ref flag).
+This project is tested and run NodeJS and Deno (requires NodeJS v14.10 or higher or Node v13.0 with --harmony-weak-ref flag).
 
 ## Setup
 
-Install with:
+Install with (NPM):
 
 ```
 npm i weak-lru-cache
 ```
 And `import` or `require` it to access the constructor:
 ```
-const { WeakLRUCache } = require('weak-lru-cache');
+import { WeakLRUCache } from 'weak-lru-cache';
 
 let myCache = new WeakLRUCache();
 myValue.setValue('key', { greeting: 'hello world' });
 myValue.getValue('key') -> return the object above as long as it is still cached
+```
+Or in Deno, import directly from the [`weakcache` deno.land package](https://deno.land/x/weakcache):
+```
+import { WeakLRUCache } from 'https://deno.land/x/weakcache/index.js';
+...
 ```
 
 ## Basic Usage
