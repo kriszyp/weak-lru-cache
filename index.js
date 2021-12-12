@@ -88,7 +88,7 @@ export class WeakLRUCache extends Map  {
 		return super.set(key, entry)
 	}
 	delete(key) {
-		let oldEntry = this.get(key)
+		let oldEntry = super.get(key)
 		if (oldEntry) {
 			this.expirer.delete(oldEntry)
 		}
