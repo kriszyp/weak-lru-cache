@@ -1,3 +1,7 @@
+[![npm version](https://img.shields.io/npm/dw/weak-lru-cache)](https://www.npmjs.org/package/weak-lru-cache)
+[![npm version](https://img.shields.io/npm/v/weak-lru-cache.svg?style=flat-square)](https://www.npmjs.org/package/weak-lru-cache)
+[![license](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
+
 # weak-lru-cache
 
 The weak-lru-cache package provides a powerful cache that works in harmony with the JS garbage collection (GC) and least-recently used (LRU) and least-freqently used (LFU) expiration strategy to help cache data with highly optimized cache retention. It uses LRU/LFU (LRFU) expiration to retain referenced data, and then once data has been inactive, it uses weak references (and finalization registry) to allow GC to remove the cached data as part of the normal GC cycles, but still continue to provide cached access to the data as long as it still resides in memory and hasn't been collected. This provides the best of modern expiration strategies combined with optimal GC interaction.
