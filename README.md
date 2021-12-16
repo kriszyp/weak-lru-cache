@@ -58,7 +58,7 @@ The `expirationPriority` can also be set to `-1` that the value should be `pinne
 The `WeakLRUCache` constructor supports an optional `options` object parameter that allows specific configuration and cache tuning. The following properties (all optional) can be defined on the `options` object:
 
 ### cacheSize
-This indicates the number of entries to allocate in the cache. This defaults to 32,768.
+This indicates the number of entries to allocate in the cache. This defaults to 32,768, and the maximum allowed value is 16,777,216.
 
 ### expirer
 By default there is a single shared expiration cache, that is a single instance of `LRFUExpirer`. However, you can define your own expiration cache or create separate instances of LRFUExpirer. Generally using a (the default) single instance is preferable since it naturally gives higher priority/recency to more heavily used caches, and allows lesser used caches to expire more of their entries.
