@@ -1,7 +1,7 @@
 {
   "name": "weak-lru-cache",
   "author": "Kris Zyp",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "An LRU cache of weak references",
   "license": "MIT",
   "types": "./index.d.ts",
@@ -17,6 +17,7 @@
     "url": "http://github.com/kriszyp/weak-lru-cache"
   },
   "type": "module",
+  "main": "dist/index.cjs",
   "module": "index.js",
   "exports": {
     ".": {
