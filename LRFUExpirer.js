@@ -57,7 +57,7 @@ export class LRFUExpirer {
 			let lru = this.lru[lruIndex]
 			// check to see if it is in the same generation
 			lruPosition = lru.position
-			if ((originalPosition > lruPosition ? lruPosition + this.lruSize : lruPosition) - originalPosition < (this.lruSize >> 3))
+			if ((originalPosition > lruPosition ? lruPosition + this.lruSize : lruPosition) - originalPosition < (this.lruSize >> 2))
 				return // only recently added, don't promote
 			lru[originalPosition & 0x3fffff] = null // remove it, we are going to move/promote it
 			lruIndex++
