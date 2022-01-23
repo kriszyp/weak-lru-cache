@@ -75,6 +75,37 @@ The `WeakLRUCache` class extends the native `Map` class, and consequently, all t
 
 The cache entries also can contain metadata about the entry, including information about the cache entries position in the LRFU cache that informs when it will expire. However, you can also set your own properties on the cache entry to store you own metadata. This will be retained until the entry is removed/collected.
 
+## Usage in synchronous execution
+
+Weak references used by `WeakLRUCache` in some cases might prevent referenced objects to be garbage collected. In particular any `getValue` or `setValue` calls will mark target objects to not be allowed to be collected during current synchronous execution (for details on this check [WeakRef specification](https://tc39.es/ecma262/#sec-weak-ref-objects) and check mentions of `AddToKeptObjects` and `ClearKeptObjects`). For optimal GC interaction consider changing your fully synchronous code into async and allow full event loop turn from time to time. As an example:
+
+```diff
+ let myCache = new WeakLRUCache();
+ // `setValue` happening elsewhere
+
+ function getObjectAndProcessByKey(key) {
+   let obj = myCache.getValue(key);
+   if (!obj) {
+     obj = constructObjectByKey(key);
+     myCache.setValue(key, obj)
+   }
+   doProcessingOnObject(obj);
+ }
+
+-function processPotentiallyLargeAmountOfData(keysToProcess) {
++async function processPotentiallyLargeAmountOfData(keysToProcess) {
++  let i = 0;
+   for (let key of keysToProcess) {
+     getObjectAndProcessByKey(key)
++    if (++i % EventLoopInterval === 0) {
++      await new Promise(resolve => setImmediate(resolve))
++    }
+   }
+ }
+```
+
+This would allow to compromise between speed and memory usage. `EventLoopInterval` would dictate how often your code allows for used objects to be actually collected (assuming there are no strong references to them) and is up to you to define it (take into account how large objects in cache are as well as memory constraints in environment you will execute your application). Keep in mind that GC behavior is not deterministic so just allowing objects to be collected doesn't mean they will.
+
 ## License
 
 MIT
