@@ -10,6 +10,11 @@ export class WeakLRUCache extends Map  {
 		if (options && options.cacheSize) {
 			options.lruSize = options.cacheSize >> 2
 		}
+		if (options && options.clearKeptInterval) {
+			this.clearKeptInterval = options.clearKeptInterval
+			this.clearKeptCount = 0
+			this.clearKeptObjects = options.clearKeptObjects
+		}
 		this.expirer = (options ? options.expirer === false ? defaultNoLRUExpirer : options.expirer : null) || defaultExpirer || (defaultExpirer = new LRFUExpirer(options))
 		this.deferRegister = Boolean(options && options.deferRegister)
 		let registry = this.registry = new FinalizationRegistry(key => {
@@ -42,6 +47,8 @@ export class WeakLRUCache extends Map  {
 					super.delete(key)
 				else {
 					entry.value = value
+					if (this.clearKeptInterval)
+						this.incrementClearKeptCount()
 					if (mode !== 1)
 						this.expirer.used(entry)
 					return mode === 2 ? value : entry
@@ -63,6 +70,8 @@ export class WeakLRUCache extends Map  {
 		let entry
 		if (value && typeof value == 'object') {
 			entry = new WeakRef(value)
+			if (this.clearKeptInterval)
+				this.incrementClearKeptCount()
 			entry.value = value
 			if (this.deferRegister) {
 				entry.key = key
@@ -74,6 +83,15 @@ export class WeakLRUCache extends Map  {
 		// else entry is undefined
 		this.set(key, entry, expirationPriority)
 		return entry
+	}
+	incrementClearKeptCount() {
+		if (++this.clearKeptCount >= this.clearKeptInterval) {
+			this.clearKeptCount = 0
+			if (this.clearKeptObjects)
+				this.clearKeptObjects()
+			if (this.registry.cleanupSome)
+				this.registry.cleanupSome()
+		}
 	}
 	set(key, entry, expirationPriority) {
 		let oldEntry = super.get(key)
